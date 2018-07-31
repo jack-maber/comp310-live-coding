@@ -5,6 +5,17 @@
 
 ; ---------------------------------------------------------------------------
 
+PPUCTRL   = $2000
+PPUMASK   = $2001
+PPUSTATUS = $2002
+OAMADDR   = $2003
+OAMDATA   = $2004
+PPUSCROLL = $2005
+PPUADDR   = $2006
+PPUDATA   = $2007
+OAMDMA    = $4014
+
+
     .bank 0
     .org $C000
 
@@ -17,8 +28,8 @@ RESET:
     LDX #$ff
     TXS        ; Set up stack
     INX        ; now X = 0
-    STX $2000  ; disable NMI
-    STX $2001  ; disable rendering
+    STX PPUCTRL  ; disable NMI
+    STX PPUMASK  ; disable rendering
     STX $4010  ; disable DMC IRQs
 
     ; Optional (omitted):
@@ -28,12 +39,12 @@ RESET:
     ; with the vblank flag still true.  This has about a 1 in 13
     ; chance of happening on NTSC or 2 in 9 on PAL.  Clear the
     ; flag now so the vblankwait1 loop sees an actual vblank.
-    BIT $2002
+    BIT PPUSTATUS
 
     ; First of two waits for vertical blank to make sure that the
     ; PPU has stabilized
 vblankwait1:  
-    BIT $2002
+    BIT PPUSTATUS
     BPL vblankwait1
 
     ; We now have about 30,000 cycles to burn before the PPU stabilizes.
@@ -42,6 +53,7 @@ vblankwait1:
     ; expects for BSS.  Conveniently, X is still 0.
     TXA
 clrmem:
+    LDA #0
     STA $000,x
     STA $100,x
     STA $300,x
@@ -54,6 +66,9 @@ clrmem:
     ; display list to be copied to OAM.  OAM needs to be initialized to
     ; $EF-$FF, not 0, or you'll get a bunch of garbage sprites at (0, 0).
 
+    LDA #$FF
+    STA $200,x
+
     INX
     BNE clrmem
 
@@ -61,10 +76,25 @@ clrmem:
     ; or set up other mapper registers.
    
 vblankwait2:
-    BIT $2002
+    BIT PPUSTATUS
     BPL vblankwait2
 
-    ; End of initialisation code -- enter an infinite loop
+    ; End of initialisation code
+
+    ; Reset the PPU high/low latch
+    LDA PPUSTATUS
+
+    ; Write address $3F10 (background colour) to the PPU
+    LDA #$3F
+    STA PPUADDR
+    LDA #$10
+    STA PPUADDR
+
+    ; Write the background colour
+    LDA #$2c
+    STA PPUDATA
+
+    ; Enter an infinite loop
 forever:
     JMP forever
 
