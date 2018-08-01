@@ -94,6 +94,23 @@ vblankwait2:
     LDA #$30
     STA PPUDATA
 
+    ; Write the palette colours
+    LDA #$17
+    STA PPUDATA
+    LDA #$0F
+    STA PPUDATA
+    LDA #$27
+    STA PPUDATA
+
+    LDA #$30
+    STA PPUDATA
+    LDA #$17
+    STA PPUDATA
+    LDA #$0F
+    STA PPUDATA
+    LDA #$25
+    STA PPUDATA
+
     ; Write sprite data for sprite 0
     LDA #120    ; Y position
     STA $0200
@@ -103,6 +120,16 @@ vblankwait2:
     STA $0202
     LDA #128    ; X position
     STA $0203
+
+    ; Write sprite data for sprite 1
+    LDA #60    ; Y position
+    STA $0204
+    LDA #1      ; Tile number
+    STA $0205
+    LDA #%10000001      ; Attributes
+    STA $0206
+    LDA #190    ; X position
+    STA $0207
 
     LDA #%10000000 ; Enable NMI
     STA PPUCTRL
@@ -121,14 +148,14 @@ NMI:
     ; Increment x position of sprite
     LDA $0203
     CLC
-    ADC #4
+    ADC #1
     STA $0203
 
     ; Increment y position of sprite
-    LDA $0200
+    LDA $0204
     CLC
-    ADC #3
-    STA $0200
+    ADC #1
+    STA $0204
 
     LDA #0
     STA OAMADDR
@@ -149,4 +176,4 @@ NMI:
 
     .bank 2
     .org $0000
-    ; TODO: add graphics
+    .incbin "comp310.chr"
