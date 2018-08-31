@@ -29,6 +29,14 @@ BUTTON_RIGHT  = %00000001
     .rsset $0010
 joypad1_state      .rs 1
 
+    .rsset $0200
+sprite_player      .rs 4
+
+    .rsset $0000
+SPRITE_Y           .rs 1
+SPRITE_TILE        .rs 1
+SPRITE_ATTRIB      .rs 1
+SPRITE_X           .rs 1
 
     .bank 0
     .org $C000
@@ -118,13 +126,13 @@ vblankwait2:
 
     ; Write sprite data for sprite 0
     LDA #120    ; Y position
-    STA $0200
+    STA sprite_player + SPRITE_Y
     LDA #0      ; Tile number
-    STA $0201
+    STA sprite_player + SPRITE_TILE
     LDA #0      ; Attributes
-    STA $0202
+    STA sprite_player + SPRITE_ATTRIB
     LDA #128    ; X position
-    STA $0203
+    STA sprite_player + SPRITE_X
 
     LDA #%10000000 ; Enable NMI
     STA PPUCTRL
@@ -161,40 +169,40 @@ ReadController:
     LDA joypad1_state
     AND #BUTTON_RIGHT
     BEQ ReadRight_Done  ; if ((JOYPAD1 & 1) != 0) {
-    LDA $0203
+    LDA sprite_player + SPRITE_X
     CLC
     ADC #1
-    STA $0203
+    STA sprite_player + SPRITE_X
 ReadRight_Done:         ; }
 
     ; React to Down button
     LDA joypad1_state
     AND #BUTTON_DOWN
     BEQ ReadDown_Done  ; if ((JOYPAD1 & 1) != 0) {
-    LDA $0200
+    LDA sprite_player + SPRITE_Y
     CLC
     ADC #1
-    STA $0200
+    STA sprite_player + SPRITE_Y
 ReadDown_Done:         ; }
 
     ; React to Left button
     LDA joypad1_state
     AND #BUTTON_LEFT
     BEQ ReadLeft_Done  ; if ((JOYPAD1 & 1) != 0) {
-    LDA $0203
+    LDA sprite_player + SPRITE_X
     SEC
     SBC #1
-    STA $0203
+    STA sprite_player + SPRITE_X
 ReadLeft_Done:         ; }
 
     ; React to Up button
     LDA joypad1_state
     AND #BUTTON_UP
     BEQ ReadUp_Done  ; if ((JOYPAD1 & 1) != 0) {
-    LDA $0200
+    LDA sprite_player + SPRITE_Y
     SEC
     SBC #1
-    STA $0200
+    STA sprite_player + SPRITE_Y
 ReadUp_Done:         ; }
 
     ; Copy sprite data to the PPU
