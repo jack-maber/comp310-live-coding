@@ -126,6 +126,21 @@ vblankwait2:
 
     ; End of initialisation code
 
+    JSR InitialiseGame
+
+    LDA #%10000000 ; Enable NMI
+    STA PPUCTRL
+
+    LDA #%00010000 ; Enable sprites
+    STA PPUMASK
+
+    ; Enter an infinite loop
+forever:
+    JMP forever
+
+; ---------------------------------------------------------------------------
+
+InitialiseGame: ; Begin subroutine
     ; Reset the PPU high/low latch
     LDA PPUSTATUS
 
@@ -193,15 +208,7 @@ InitEnemies_LoopX:
     STA temp_y
     BNE InitEnemies_LoopY
 
-    LDA #%10000000 ; Enable NMI
-    STA PPUCTRL
-
-    LDA #%00010000 ; Enable sprites
-    STA PPUMASK
-
-    ; Enter an infinite loop
-forever:
-    JMP forever
+    RTS ; End subroutine
 
 ; ---------------------------------------------------------------------------
 
@@ -302,7 +309,9 @@ UpdateBullet_Done:
 UpdateEnemies_Loop:
     ; Check if enemy is alive
     LDA enemy_info+ENEMY_ALIVE, x
-    BEQ UpdateEnemies_Next
+    BNE UpdateEnemies_Start
+    JMP UpdateEnemies_Next
+UpdateEnemies_Start:
     LDA sprite_enemy+SPRITE_X, x
     CLC
     ADC enemy_info+ENEMY_SPEED, x
@@ -326,30 +335,42 @@ UpdateEnemies_Reverse:
     EOR #%01000000
     STA sprite_enemy+SPRITE_ATTRIB, x
 UpdateEnemies_NoReverse:
-    ; Check collision with bullet
+
+                               ;             \1        \2        \3            \4            \5            \6            \7
+CheckCollisionWithEnemy .macro ; parameters: object_x, object_y, object_hit_x, object_hit_y, object_hit_w, object_hit_h, no_collision_label
+    ; If there is a collision, execution continues immediately after this macro
+    ; Else, jump to no_collision_label
     LDA sprite_enemy+SPRITE_X, x  ; Calculate x_enemy - w_bullet - 1 (x1-w2-1)
+    .if \3 > 0
     SEC
-    SBC #BULLET_HITBOX_X
+    SBC \3
+    .endif
     SEC
-    SBC #BULLET_HITBOX_WIDTH+1    ; Assume w2 = 8
-    CMP sprite_bullet+SPRITE_X    ; Compare with x_bullet (x2)
-    BCS UpdateEnemies_NoCollision ; Branch if x1-w2-1-BULLET_HITBOX_X >= x2 i.e. x1-w2 > x2
+    SBC \5+1
+    CMP \1                        ; Compare with x_bullet (x2)
+    BCS \7                        ; Branch if x1-w2-1-BULLET_HITBOX_X >= x2 i.e. x1-w2 > x2
     CLC
-    ADC #BULLET_HITBOX_WIDTH+1+ENEMY_HITBOX_WIDTH   ; Calculate x_enemy + w_enemy (x1+w1), assuming w1 = 8
-    CMP sprite_bullet+SPRITE_X    ; Compare with x_bullet (x2)
-    BCC UpdateEnemies_NoCollision ; Branching if x1+w1-BULLET_HITBOX_X < x2
+    ADC \5+1+ENEMY_HITBOX_WIDTH   ; Calculate x_enemy + w_enemy (x1+w1), assuming w1 = 8
+    CMP \1                        ; Compare with x_bullet (x2)
+    BCC \7                        ; Branching if x1+w1-BULLET_HITBOX_X < x2
 
     LDA sprite_enemy+SPRITE_Y, x  ; Calculate y_enemy - h_bullet (y1-h2)
+    .if \3 > 0
     SEC
-    SBC #BULLET_HITBOX_Y
+    SBC \4
+    .endif
     SEC
-    SBC #BULLET_HITBOX_HEIGHT+1   ; Assume h2 = 8
-    CMP sprite_bullet+SPRITE_Y    ; Compare with y_bullet (y2)
-    BCS UpdateEnemies_NoCollision ; Branch if y1-h2 > y2
+    SBC \6+1                
+    CMP \2                        ; Compare with y_bullet (y2)
+    BCS \7                        ; Branch if y1-h2 > y2
     CLC
-    ADC #BULLET_HITBOX_HEIGHT+1+ENEMY_HITBOX_HEIGHT   ; Calculate y_enemy + h_enemy (y1+h1), assuming h1 = 8
-    CMP sprite_bullet+SPRITE_Y    ; Compare with y_bullet (y2)
-    BCC UpdateEnemies_NoCollision ; Branching if y1+h1 < y2
+    ADC \6+1+ENEMY_HITBOX_HEIGHT  ; Calculate y_enemy + h_enemy (y1+h1), assuming h1 = 8
+    CMP \2                        ; Compare with y_bullet (y2)
+    BCC \7                        ; Branching if y1+h1 < y2
+    .endm
+
+    ; Check collision with bullet
+    CheckCollisionWithEnemy sprite_bullet+SPRITE_X, sprite_bullet+SPRITE_Y, #BULLET_HITBOX_X, #BULLET_HITBOX_Y, #BULLET_HITBOX_WIDTH, #BULLET_HITBOX_HEIGHT, UpdateEnemies_NoCollision
     ; Handle collision
     LDA #0                        ; Destroy the bullet and the enemy
     STA bullet_active
@@ -358,12 +379,22 @@ UpdateEnemies_NoReverse:
     STA sprite_bullet+SPRITE_Y
     STA sprite_enemy+SPRITE_Y, x
 UpdateEnemies_NoCollision:
+
+    ; Check collision with player
+    CheckCollisionWithEnemy sprite_player+SPRITE_X, sprite_player+SPRITE_Y, #0, #0, #8, #8, UpdateEnemies_NoCollisionWithPlayer
+    ; Handle collision
+    JSR InitialiseGame
+    JMP UpdateEnemies_End
+UpdateEnemies_NoCollisionWithPlayer:
+
 UpdateEnemies_Next:
     DEX
     DEX
     DEX
     DEX
-    BPL UpdateEnemies_Loop
+    BMI UpdateEnemies_End
+    JMP UpdateEnemies_Loop
+UpdateEnemies_End:
 
     ; Copy sprite data to the PPU
     LDA #0
