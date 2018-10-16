@@ -87,9 +87,54 @@ vblankwait2:
 	STA PPUADDR
 	
 	; Writes background colour
-	LDA #5
+	LDA #$30
 	STA PPUDATA
 	
+	; Writes palette colour
+	LDA #$1F
+	STA PPUDATA
+	LDA #$2D
+	STA PPUDATA
+	LDA #$10
+	STA PPUDATA
+	
+	; Writes palette colour for sprite 1
+	LDA #$30
+	STA PPUDATA
+	LDA #$16
+	STA PPUDATA
+	LDA #$2D
+	STA PPUDATA
+	LDA #$10
+	STA PPUDATA
+	
+	
+	
+	; Write Sprite Data for sprite 0
+	LDA #120	;y POSITION
+	STA $0200
+	LDA #0		; Tile number
+	STA $0201
+	LDA #0		; Attributes
+	STA $0202
+	LDA #128	;X position
+	STA $0203
+	
+	; Write Sprite Data for sprite 1
+	LDA #60	;y POSITION
+	STA $0204
+	LDA #1		; Tile number
+	STA $0205
+	LDA #1		; Attributes
+	STA $0206
+	LDA #190	;X position
+	STA $0207
+	
+	LDA #%10000000	;Percent symbol means binary, enables NMI
+	STA PPUCTRL
+	
+	LDA #%00010000 	;Enable sprite drawer
+	STA PPUMASK
 	
 	; End of initialisation code -- enter an infinite loop
 forever:
@@ -99,7 +144,24 @@ forever:
 
 ; NMI is called on every frame
 NMI:
-    RTI         ; Return from interrupt
+    ; Move Sprite 0 left to right
+	LDA $0203 
+	CLC 
+	ADC #1	;Incrementation bit
+	STA $0203
+	
+	; ; Move Sprite 1 top to bottom
+	LDA $0204 
+	CLC 
+	ADC #1	;Incrementation bit
+	STA $0204
+	
+	LDA #0
+	STA OAMADDR
+	LDA #$02 	;Tells where the sprites are stored I.E. $0200
+	STA OAMDMA
+	
+	RTI         ; Return from interrupt
 
 ; ---------------------------------------------------------------------------
 
@@ -114,3 +176,4 @@ NMI:
     .bank 2
     .org $0000
     ; TODO: add graphics
+	.incbin "comp310.chr"
