@@ -15,6 +15,8 @@ PPUADDR = $2006
 PPUDATA = $2007
 OAMDMA = $4014
 
+CONTROLLER1 = $4016 ;controller constants
+CONTROLLER2 = $4017
 
 
     .bank 0
@@ -98,17 +100,6 @@ vblankwait2:
 	LDA #$10
 	STA PPUDATA
 	
-	; Writes palette colour for sprite 1
-	LDA #$30
-	STA PPUDATA
-	LDA #$16
-	STA PPUDATA
-	LDA #$2D
-	STA PPUDATA
-	LDA #$10
-	STA PPUDATA
-	
-	
 	
 	; Write Sprite Data for sprite 0
 	LDA #120	;y POSITION
@@ -120,15 +111,6 @@ vblankwait2:
 	LDA #128	;X position
 	STA $0203
 	
-	; Write Sprite Data for sprite 1
-	LDA #60	;y POSITION
-	STA $0204
-	LDA #1		; Tile number
-	STA $0205
-	LDA #1		; Attributes
-	STA $0206
-	LDA #190	;X position
-	STA $0207
 	
 	LDA #%10000000	;Percent symbol means binary, enables NMI
 	STA PPUCTRL
@@ -144,18 +126,36 @@ forever:
 
 ; NMI is called on every frame
 NMI:
-    ; Move Sprite 0 left to right
-	LDA $0203 
-	CLC 
-	ADC #1	;Incrementation bit
+	;Init controller 1
+	LDA #1
+	STA CONTROLLER1
+	LDA #0
+	STA CONTROLLER1
+	
+	;Read A Button
+	LDA CONTROLLER1
+	AND #%00000001
+	BEQ ReadA_Done 
+	LDA $0203
+	CLC
+	ADC #1
 	STA $0203
+ReadA_Done:
+
+	;Read B Button
+	LDA CONTROLLER1
+	AND #%00000001
+	BEQ ReadB_Done 
+	LDA $0200
+	CLC
+	ADC #1
+	STA $0200
+ReadB_Done:
 	
-	; ; Move Sprite 1 top to bottom
-	LDA $0204 
-	CLC 
-	ADC #1	;Incrementation bit
-	STA $0204
 	
+	
+	
+	; Copy sprite data to PPU
 	LDA #0
 	STA OAMADDR
 	LDA #$02 	;Tells where the sprites are stored I.E. $0200

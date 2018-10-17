@@ -1,7 +1,9 @@
 ; .\comp310.asm
+ReadB_Done                       = $C0A6
+ReadA_Done                       = $C096
 vblankwait1                      = $C017
 vblankwait2                      = $C035
 clrmem                           = $C01D
 RESET                            = $C000
-NMI                              = $C0A4
-forever                          = $C0A1
+NMI                              = $C07C
+forever                          = $C079
