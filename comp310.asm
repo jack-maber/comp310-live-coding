@@ -18,8 +18,23 @@ OAMDMA = $4014
 CONTROLLER1 = $4016 ;controller constants
 CONTROLLER2 = $4017
 
+BUTTON_A = 		%10000000
+BUTTON_B = 		%01000000
+BUTTON_SELECT = %00100000
+BUTTON_START =  %00010000
+BUTTON_UP = 	%00001000
+BUTTON_DOWN = 	%00000100
+BUTTON_LEFT = 	%00000010
+BUTTON_RIGHT = 	%00000001
 
-    .bank 0
+
+
+	.rsset $0010
+controller1_state .rs 1
+
+    
+	
+	.bank 0
     .org $C000
 
 ; Initialisation code based on https://wiki.nesdev.com/w/index.php/Init_code
@@ -132,27 +147,57 @@ NMI:
 	LDA #0
 	STA CONTROLLER1
 	
-	;Read A Button
+	; Read controller state of all the buttons
+	LDX #0
+	STX controller1_state
+ReadController:
 	LDA CONTROLLER1
-	AND #%00000001
-	BEQ ReadA_Done 
+	LSR A                 ; Input is placed into carry flag
+	ROL controller1_state
+	INX
+	CPX #8
+	BNE ReadController
+	
+	
+	;React to Right Button
+	LDA controller1_state
+	AND #BUTTON_RIGHT
+	BEQ ReadRight_Done 
 	LDA $0203
 	CLC
 	ADC #1
 	STA $0203
-ReadA_Done:
+ReadRight_Done:
 
-	;Read B Button
-	LDA CONTROLLER1
-	AND #%00000001
-	BEQ ReadB_Done 
+	;React to Down Button
+	LDA controller1_state
+	AND #BUTTON_DOWN
+	BEQ ReadDown_Done
 	LDA $0200
 	CLC
 	ADC #1
 	STA $0200
-ReadB_Done:
+ReadDown_Done:
 	
-	
+	;React to Left Button
+	LDA controller1_state
+	AND #BUTTON_LEFT
+	BEQ ReadLeft_Done 
+	LDA $0203
+	SEC
+	SBC #1
+	STA $0203
+ReadLeft_Done:
+
+	;React to Up Button
+	LDA controller1_state
+	AND #BUTTON_UP
+	BEQ ReadUp_Done
+	LDA $0200
+	SEC
+	SBC #1
+	STA $0200
+ReadUp_Done:	
 	
 	
 	; Copy sprite data to PPU
