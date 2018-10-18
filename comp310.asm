@@ -28,6 +28,9 @@ BUTTON_LEFT = 	%00000010
 BUTTON_RIGHT = 	%00000001
 
 
+max_left = 20
+max_right = 60
+
 
 	.rsset $0010
 controller1_state .rs 1
@@ -36,6 +39,7 @@ bullet_active     .rs 1
 	.rsset $0200
 sprite_player 	  .rs 4
 sprite_bullet 	  .rs 4
+sprite_enemy_0    .rs 4
 
 	.rsset $0000
 sprite_y		  .rs 1
@@ -136,6 +140,19 @@ vblankwait2:
 	STA sprite_player + sprite_attrib
 	LDA #128	;X position
 	STA sprite_player + sprite_x
+	
+	;Init enemy
+	LDA #20	;y POSITION
+	STA sprite_enemy_0 + sprite_y
+	LDA #1		; Tile number
+	STA sprite_enemy_0 + sprite_tile
+	LDA #0		; Attributes
+	STA sprite_enemy_0 + sprite_attrib
+	LDA #128	;X position
+	STA sprite_enemy_0 + sprite_x
+	
+	
+	
 	
 	
 	LDA #%10000000	;Percent symbol means binary, enables NMI
@@ -238,13 +255,17 @@ ReadA_Done:
 	SEC
 	SBC #2
 	STA sprite_bullet + sprite_y
-	;Despawn bullet, as carry flag is clear, thus it has lef the screen
+	;Despawn bullet, as carry flag is clear, thus it has left the screen
 	BCS UpdateBullet_Done
 	LDA #0
 	STA bullet_active
 UpdateBullet_Done:
 	
-	
+	;Update Enemy
+	LDA sprite_enemy_0 + sprite_x
+	SEC
+	SBC #1
+	STA sprite_enemy_0 + sprite_x
 	
 	; Copy sprite data to PPU
 	LDA #0
