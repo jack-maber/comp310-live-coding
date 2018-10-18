@@ -31,8 +31,19 @@ BUTTON_RIGHT = 	%00000001
 
 	.rsset $0010
 controller1_state .rs 1
+bullet_active     .rs 1
+  
+	.rsset $0200
+sprite_player 	  .rs 4
+sprite_bullet 	  .rs 4
 
-    
+	.rsset $0000
+sprite_y		  .rs 1
+sprite_tile		  .rs 1
+sprite_attrib	  .rs 1
+sprite_x		  .rs 1
+
+
 	
 	.bank 0
     .org $C000
@@ -112,19 +123,19 @@ vblankwait2:
 	STA PPUDATA
 	LDA #$2D
 	STA PPUDATA
-	LDA #$10
+	LDA #$3D
 	STA PPUDATA
 	
 	
 	; Write Sprite Data for sprite 0
 	LDA #120	;y POSITION
-	STA $0200
+	STA sprite_player + sprite_y
 	LDA #0		; Tile number
-	STA $0201
+	STA sprite_player + sprite_tile
 	LDA #0		; Attributes
-	STA $0202
+	STA sprite_player + sprite_attrib
 	LDA #128	;X position
-	STA $0203
+	STA sprite_player + sprite_x
 	
 	
 	LDA #%10000000	;Percent symbol means binary, enables NMI
@@ -163,41 +174,76 @@ ReadController:
 	LDA controller1_state
 	AND #BUTTON_RIGHT
 	BEQ ReadRight_Done 
-	LDA $0203
+	LDA sprite_player + sprite_x
 	CLC
 	ADC #1
-	STA $0203
+	STA sprite_player + sprite_x
 ReadRight_Done:
 
 	;React to Down Button
 	LDA controller1_state
 	AND #BUTTON_DOWN
 	BEQ ReadDown_Done
-	LDA $0200
+	LDA sprite_player + sprite_y
 	CLC
 	ADC #1
-	STA $0200
+	STA sprite_player + sprite_y
 ReadDown_Done:
 	
 	;React to Left Button
 	LDA controller1_state
 	AND #BUTTON_LEFT
 	BEQ ReadLeft_Done 
-	LDA $0203
+	LDA sprite_player + sprite_x
 	SEC
 	SBC #1
-	STA $0203
+	STA sprite_player + sprite_x
 ReadLeft_Done:
 
 	;React to Up Button
 	LDA controller1_state
 	AND #BUTTON_UP
 	BEQ ReadUp_Done
-	LDA $0200
+	LDA sprite_player + sprite_y
 	SEC
 	SBC #1
-	STA $0200
+	STA sprite_player + sprite_y
 ReadUp_Done:	
+	
+	;React to A Button
+	LDA controller1_state
+	AND #BUTTON_A
+	BEQ ReadA_Done
+	; Spawn bullet sprite
+	LDA bullet_active
+	BNE ReadA_Done ; If there is no active bullet on screen, one will be spawned  
+	LDA #1
+	STA bullet_active
+	LDA sprite_player + sprite_y	;y POSITION
+	STA sprite_bullet + sprite_y
+	LDA #2		; Tile number
+	STA sprite_bullet + sprite_tile
+	LDA #0		; Attributes
+	STA sprite_bullet + sprite_attrib
+	LDA sprite_player + sprite_x	;X position
+	STA sprite_bullet + sprite_x
+
+ReadA_Done:
+
+
+	;Update bullet position
+	LDA bullet_active
+	BEQ UpdateBullet_Done
+	LDA sprite_bullet + sprite_y
+	SEC
+	SBC #2
+	STA sprite_bullet + sprite_y
+	;Despawn bullet, as carry flag is clear, thus it has lef the screen
+	BCS UpdateBullet_Done
+	LDA #0
+	STA bullet_active
+UpdateBullet_Done:
+	
 	
 	
 	; Copy sprite data to PPU
