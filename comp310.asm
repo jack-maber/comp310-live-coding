@@ -27,6 +27,13 @@ BUTTON_DOWN = 	%00000100
 BUTTON_LEFT = 	%00000010
 BUTTON_RIGHT = 	%00000001
 
+ENEMY_HITBOX_WIDTH  = 8
+ENEMY_HITBOX_HEIGHT = 8
+
+BULLET_HITBOX_X		 = 3
+BULLET_HITBOX_Y		 = 3
+BULLET_HITBOX_WIDTH  = 2
+BULLET_HITBOX_HEIGHT = 2
 
 max_left = 20
 max_right = 60
@@ -47,6 +54,8 @@ sprite_tile		  .rs 1
 sprite_attrib	  .rs 1
 sprite_x		  .rs 1
 
+	.rsset $0000
+enemy_alive		  .rs 1
 
 	
 	.bank 0
@@ -142,6 +151,8 @@ vblankwait2:
 	STA sprite_player + sprite_x
 	
 	;Init enemy
+	LDA #1
+	STA enemy_alive
 	LDA #20	;y POSITION
 	STA sprite_enemy_0 + sprite_y
 	LDA #1		; Tile number
@@ -261,11 +272,53 @@ ReadA_Done:
 	STA bullet_active
 UpdateBullet_Done:
 	
+
+	
+	
 	;Update Enemy
+	LDA enemy_alive
+	BEQ Update_enemy_next
 	LDA sprite_enemy_0 + sprite_x
 	SEC
 	SBC #1
 	STA sprite_enemy_0 + sprite_x
+	
+	; Check Collision with bullet
+	LDA sprite_enemy_0 + sprite_x
+	SEC
+	SBC #BULLET_HITBOX_X
+	SEC 
+	SBC #BULLET_HITBOX_WIDTH + 1
+	CMP sprite_bullet + sprite_x
+	BCS Update_enemy_nocollision
+	CLC
+	ADC #BULLET_HITBOX_WIDTH + 1 + ENEMY_HITBOX_WIDTH
+	CMP sprite_bullet + sprite_x
+	BCC Update_enemy_nocollision
+	
+	;Check Y
+	LDA sprite_enemy_0 + sprite_y
+	SEC
+	SBC #BULLET_HITBOX_Y
+	SEC
+	SBC #BULLET_HITBOX_HEIGHT + 1
+	CMP sprite_bullet + sprite_y
+	BCS Update_enemy_nocollision
+	CLC
+	ADC #BULLET_HITBOX_HEIGHT + 1 + ENEMY_HITBOX_HEIGHT
+	CMP sprite_bullet + sprite_y
+	BCC Update_enemy_nocollision
+	
+	;Handle Collision
+	LDA #0
+	STA bullet_active ;Destroy bullet
+	STA enemy_alive	  ;Destroy Enemy
+	LDA #$FF
+	STA sprite_bullet + sprite_y
+	STA sprite_enemy_0 + sprite_y	;Move bullet off screen
+Update_enemy_nocollision:
+Update_enemy_next:
+	
 	
 	; Copy sprite data to PPU
 	LDA #0

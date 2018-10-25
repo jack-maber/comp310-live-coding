@@ -1,14 +1,16 @@
 ; .\comp310.asm
-ReadDown_Done                    = $C0CB
-ReadLeft_Done                    = $C0DB
-UpdateBullet_Done                = $C127
-ReadRight_Done                   = $C0BB
-ReadA_Done                       = $C112
+Update_enemy_nocollision         = $C176
+ReadDown_Done                    = $C0D0
+ReadLeft_Done                    = $C0E0
+UpdateBullet_Done                = $C12C
+ReadRight_Done                   = $C0C0
+ReadA_Done                       = $C117
 vblankwait1                      = $C017
+Update_enemy_next                = $C176
 vblankwait2                      = $C035
 clrmem                           = $C01D
 RESET                            = $C000
-NMI                              = $C090
-ReadController                   = $C09F
-ReadUp_Done                      = $C0EB
-forever                          = $C08D
+NMI                              = $C095
+ReadController                   = $C0A4
+ReadUp_Done                      = $C0F0
+forever                          = $C092
