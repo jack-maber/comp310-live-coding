@@ -112,7 +112,21 @@ clrmem:
 
     ; Other things you can do between vblank waits are set up audio
     ; or set up other mapper registers.
-   
+	
+	
+	JSR InitialiseGame
+	
+	LDA #%10000000	;Percent symbol means binary, enables NMI
+	STA PPUCTRL
+	
+	LDA #%00010000 	;Enable sprite drawer
+	STA PPUMASK
+	
+	; End of initialisation code -- enter an infinite loop
+forever:
+    JMP forever
+
+InitialiseGame:	;Restarts Game/Begins subroutine
 vblankwait2:
     BIT PPUSTATUS
     BPL vblankwait2
@@ -163,19 +177,7 @@ vblankwait2:
 	STA sprite_enemy_0 + sprite_x
 	
 	
-	
-	
-	
-	LDA #%10000000	;Percent symbol means binary, enables NMI
-	STA PPUCTRL
-	
-	LDA #%00010000 	;Enable sprite drawer
-	STA PPUMASK
-	
-	; End of initialisation code -- enter an infinite loop
-forever:
-    JMP forever
-
+	RTS ;Ends subroutine
 ; ---------------------------------------------------------------------------
 
 ; NMI is called on every frame
@@ -271,10 +273,7 @@ ReadA_Done:
 	LDA #0
 	STA bullet_active
 UpdateBullet_Done:
-	
 
-	
-	
 	;Update Enemy
 	LDA enemy_alive
 	BEQ Update_enemy_next
@@ -283,31 +282,38 @@ UpdateBullet_Done:
 	SBC #1
 	STA sprite_enemy_0 + sprite_x
 	
+	
+							   ;			\1		  \2		\3			  \4			\5			  \6			\7
+CheckCollisionwithEnemy .macro ; parameters object_x, object_y, object_hit_x, object_hit_y, object_hit_w, object_hit_h, no_collision_label
+	
 	; Check Collision with bullet
 	LDA sprite_enemy_0 + sprite_x
 	SEC
-	SBC #BULLET_HITBOX_X
+	SBC \3
 	SEC 
-	SBC #BULLET_HITBOX_WIDTH + 1
-	CMP sprite_bullet + sprite_x
-	BCS Update_enemy_nocollision
+	SBC \5 + 1
+	CMP \1
+	BCS \7
 	CLC
-	ADC #BULLET_HITBOX_WIDTH + 1 + ENEMY_HITBOX_WIDTH
-	CMP sprite_bullet + sprite_x
-	BCC Update_enemy_nocollision
+	ADC \5 + 1 + ENEMY_HITBOX_WIDTH
+	CMP \1
+	BCC \7
 	
 	;Check Y
 	LDA sprite_enemy_0 + sprite_y
 	SEC
-	SBC #BULLET_HITBOX_Y
+	SBC \4
 	SEC
-	SBC #BULLET_HITBOX_HEIGHT + 1
-	CMP sprite_bullet + sprite_y
-	BCS Update_enemy_nocollision
+	SBC \6 + 1
+	CMP \2
+	BCS \7
 	CLC
-	ADC #BULLET_HITBOX_HEIGHT + 1 + ENEMY_HITBOX_HEIGHT
-	CMP sprite_bullet + sprite_y
-	BCC Update_enemy_nocollision
+	ADC \6 + 1 + ENEMY_HITBOX_HEIGHT
+	CMP \2
+	BCC \7
+	.endm
+	
+	CheckCollisionwithEnemy sprite_bullet+sprite_x, sprite_bullet+sprite_y, #BULLET_HITBOX_X, #BULLET_HITBOX_Y, #BULLET_HITBOX_WIDTH, #BULLET_HITBOX_HEIGHT, Update_enemy_nocollision
 	
 	;Handle Collision
 	LDA #0
@@ -318,6 +324,18 @@ UpdateBullet_Done:
 	STA sprite_enemy_0 + sprite_y	;Move bullet off screen
 Update_enemy_nocollision:
 Update_enemy_next:
+
+	;Check collision with player character
+	CheckCollisionwithEnemy sprite_player+sprite_x, sprite_player+sprite_y, #0, #0, #8, #8, Update_enemy_nocollisionwithplayer 
+	;Handle collision
+	JSR InitialiseGame
+Update_enemy_nocollisionwithplayer:
+	
+	
+	
+	
+	
+	
 	
 	
 	; Copy sprite data to PPU
