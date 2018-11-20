@@ -135,7 +135,13 @@ vblankwait2:
     LDA PPUSTATUS 
 	
 	
-	;Write address $3F10 to the PPU, as this is where the background colour is stored, as you can only write 8 bits at a time, have to do it 2 times
+	;Write address $3F00 to the PPU, as this is where the background palette is stored, as you can only write 8 bits at a time, have to do it 2 times
+	LDA #$3F ; Hexidecimal, remember the dollar sign!
+	STA PPUADDR ;PPU Read/Write address
+	LDA #$00
+	STA PPUADDR
+	
+	; Sprite pallete
 	LDA #$3F ; Hexidecimal, remember the dollar sign!
 	STA PPUADDR ;PPU Read/Write address
 	LDA #$10
@@ -163,6 +169,21 @@ vblankwait2:
 	STA sprite_player + sprite_attrib
 	LDA #128	;X position
 	STA sprite_player + sprite_x
+	
+	; Load nametable data for backgrounds
+	LDA #$20	;Write address of $2000
+	STA PPUADDR
+	LDA #$00
+	STA PPUADDR
+	
+	LDA #$10
+	STA PPUDATA
+	LDA #$11
+	STA PPUDATA
+	LDA #$12
+	STA PPUDATA
+	LDA #$13
+	STA PPUDATA
 	
 	;Init enemy
 	LDA #1
