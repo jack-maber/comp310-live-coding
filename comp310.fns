@@ -1,5 +1,5 @@
 ; .\comp310.asm
-Update_enemy_nocollision         = $C228
+Update_enemy_nocollision         = $C241
 LoadNameTable_End                = $C105
 ReadDown_Done                    = $C182
 ReadLeft_Done                    = $C192
@@ -9,13 +9,13 @@ LoadNameTable2_OuterLoop         = $C0B9
 UpdateBullet_Done                = $C1DE
 LoadAttributes2Loop              = $C0D9
 LoadNameTable_OuterLoop          = $C0F3
-NametableData                    = $C273
+NametableData                    = $C28C
 ReadRight_Done                   = $C172
 ReadA_Done                       = $C1C9
 LoadNameTable_InnerLoop          = $C0F5
-Update_enemy_nocollisionwithpla  = $C257
+Update_enemy_nocollisionwithpla  = $C270
 vblankwait1                      = $C017
-Update_enemy_next                = $C228
+Update_enemy_next                = $C241
 vblankwait2                      = $C04D
 clrmem                           = $C01D
 LoadAttributesLoop               = $C113

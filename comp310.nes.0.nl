@@ -1,4 +1,4 @@
-$C228#Update_enemy_nocollision#
+$C241#Update_enemy_nocollision#
 $C105#LoadNameTable_End#
 $C182#ReadDown_Done#
 $C192#ReadLeft_Done#
@@ -8,13 +8,13 @@ $C0B9#LoadNameTable2_OuterLoop#
 $C1DE#UpdateBullet_Done#
 $C0D9#LoadAttributes2Loop#
 $C0F3#LoadNameTable_OuterLoop#
-$C273#NametableData#
+$C28C#NametableData#
 $C172#ReadRight_Done#
 $C1C9#ReadA_Done#
 $C0F5#LoadNameTable_InnerLoop#
-$C257#Update_enemy_nocollisionwithpla#
+$C270#Update_enemy_nocollisionwithpla#
 $C017#vblankwait1#
-$C228#Update_enemy_next#
+$C241#Update_enemy_next#
 $C04D#vblankwait2#
 $C01D#clrmem#
 $C113#LoadAttributesLoop#
