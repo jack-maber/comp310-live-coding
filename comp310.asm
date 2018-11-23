@@ -15,8 +15,7 @@ PPUADDR = $2006
 PPUDATA = $2007
 OAMDMA = $4014
 
-CONTROLLER1 = $4016 ;controller constants
-CONTROLLER2 = $4017
+CONTROLLER1 = $4016 ;Controller input read address
 
 BUTTON_A = 		%10000000
 BUTTON_B = 		%01000000
@@ -35,8 +34,6 @@ BULLET_HITBOX_Y		 = 3
 BULLET_HITBOX_WIDTH  = 2
 BULLET_HITBOX_HEIGHT = 2
 
-max_left = 20
-max_right = 60
 
 
 	.rsset $0010
@@ -120,21 +117,21 @@ clrmem:
 	
 	JSR InitialiseGame
 	
-	LDA #%10000000	;Percent symbol means binary, enables NMI
+	LDA #%10000000	; Percent symbol means binary, enables NMI
 	STA PPUCTRL
 	
-	LDA #%00011000 	;Enable sprite drawer and background
+	LDA #%00011000 	; Enable sprite drawer and background
 	STA PPUMASK
 	
 	LDA #0
-	STA PPUSCROLL	;Set X scroll
-	STA PPUSCROLL 	;Set Y scroll 
+	STA PPUSCROLL	; Set X scroll
+	STA PPUSCROLL 	; Set Y scroll 
 	
 	; End of initialisation code -- enter an infinite loop
 forever:
     JMP forever
 
-InitialiseGame:	;Restarts Game/Begins subroutine
+InitialiseGame:	; Restarts Game/Begins subroutine
 vblankwait2:
     BIT PPUSTATUS
     BPL vblankwait2
@@ -142,13 +139,13 @@ vblankwait2:
 	; Reset the PPU High/Low, stops the PPU going out of sync on steps
     LDA PPUSTATUS 	
 	
-	;Write address $3F00 to the PPU, as this is where the background palette is stored, as you can only write 8 bits at a time, have to do it 2 times
+	; Write address $3F00 to the PPU, as this is where the background palette is stored, as you can only write 8 bits at a time, have to do it 2 times
 	LDA #$3F ; Hexidecimal, remember the dollar sign!
-	STA PPUADDR ;PPU Read/Write address
+	STA PPUADDR ; PPU Read/Write address
 	LDA #$00
 	STA PPUADDR
 	
-	; Writes background sprite palette
+	; Writes background sprite palette to PPU
 	LDA #$21
 	STA PPUDATA
 	LDA #$19
@@ -158,9 +155,9 @@ vblankwait2:
 	LDA #$2D
 	STA PPUDATA
 	
-	; Sprite pallete write location for Player and Enenmy
+	; Sprite pallete write location for Player and Enemy
 	LDA #$3F ; Hexidecimal, remember the dollar sign!
-	STA PPUADDR ;PPU Read/Write address
+	STA PPUADDR ; PPU Read/Write address
 	LDA #$10
 	STA PPUADDR
 	
@@ -178,13 +175,13 @@ vblankwait2:
 	
 	
 	; Write Sprite Data for sprite 0
-	LDA #120	;y POSITION
+	LDA #200	;y POSITION
 	STA sprite_player + sprite_y
 	LDA #0		; Tile number
 	STA sprite_player + sprite_tile
 	LDA #0		; Attributes
 	STA sprite_player + sprite_attrib
-	LDA #128	;X position
+	LDA #125	;X position
 	STA sprite_player + sprite_x
 
 
@@ -194,14 +191,14 @@ vblankwait2:
 	LDA #$00
 	STA PPUADDR
 	
-	;Loads all of the NameTable data as NES cant reach 256 bits
+	; Loads all of the NameTable data as NES cant reach 256 bits so loops are required brother
 	LDA #LOW(NametableData)
 	STA nametable_address	
 	LDA #HIGH(NametableData)
 	STA nametable_address+1
 LoadNameTable2_OuterLoop:
 	LDY #0
-LoadNameTable2_InnerLoop:			;Loads background data table
+LoadNameTable2_InnerLoop:			; Loads background data table
 	LDA [nametable_address], Y
 	BEQ LoadNameTable2_End
 	STA PPUDATA
@@ -211,15 +208,14 @@ LoadNameTable2_InnerLoop:			;Loads background data table
 	JMP LoadNameTable2_OuterLoop
 LoadNameTable2_End:
 
-	; Load Attribute Table
-	LDA #$27				;Write address of $23C0 to PPUADDR register
+	; Load Attribute Table for the background
+	LDA #$27				; Write address of $23C0 to PPUADDR register
 	STA PPUADDR
 	LDA #$C0
 	STA PPUADDR
-
 	LDA #0
 	LDX #64
-LoadAttributes2Loop:
+LoadAttributes2Loop:  		;Loads attributes for the second nametable/looped background
 	STA PPUDATA
 	DEX
 	BNE LoadAttributes2Loop
@@ -231,14 +227,14 @@ LoadAttributes2Loop:
 	LDA #$00
 	STA PPUADDR
 	
-	;Loads all of the NameTable data as NES cant reach 256 bits
+	; Loads all of the NameTable data as NES cant reach 256 bits
 	LDA #LOW(NametableData)
 	STA nametable_address	
 	LDA #HIGH(NametableData)
 	STA nametable_address+1
 LoadNameTable_OuterLoop:
 	LDY #0
-LoadNameTable_InnerLoop:			;Loads background data table
+LoadNameTable_InnerLoop:			; Loads background data table
 	LDA [nametable_address], Y
 	BEQ LoadNameTable_End
 	STA PPUDATA
@@ -249,11 +245,10 @@ LoadNameTable_InnerLoop:			;Loads background data table
 LoadNameTable_End:
 
 	; Load Attribute Table
-	LDA #$23				;Write address of $23C0 to PPUADDR register
+	LDA #$23				; Write address of $23C0 to PPUADDR register
 	STA PPUADDR
 	LDA #$C0
 	STA PPUADDR
-
 	LDA #0
 	LDX #64
 LoadAttributesLoop:
@@ -263,34 +258,34 @@ LoadAttributesLoop:
 
 
 	;Enemy Data Allocation
-	LDA #$10
-	STA PPUDATA
-	LDA #$11
-	STA PPUDATA
-	LDA #$12
-	STA PPUDATA
-	LDA #$13
-	STA PPUDATA
+	; LDA #$10
+	; STA PPUDATA
+	; LDA #$11
+	; STA PPUDATA
+	; LDA #$12
+	; STA PPUDATA
+	; LDA #$13
+	; STA PPUDATA
 	
-	;Init enemy
+	; Initiates enemy at the start of the game
 	LDA #1
 	STA enemy_alive
-	LDA #20	;y POSITION
+	LDA #20	; y POSITION
 	STA sprite_enemy_0 + sprite_y
 	LDA #1		; Tile number
 	STA sprite_enemy_0 + sprite_tile
 	LDA #0		; Attributes
 	STA sprite_enemy_0 + sprite_attrib
-	LDA #128	;X position
+	LDA #128	; X position
 	STA sprite_enemy_0 + sprite_x
 	
 	
-	RTS ;Ends subroutine
+	RTS ; Ends subroutine
 ; ---------------------------------------------------------------------------
 
-; NMI is called on every frame
+; NMI is called on every frame, so main game loop is contained here 
 NMI:
-	;Init controller 1
+	; Init controller 1
 	LDA #1
 	STA CONTROLLER1
 	LDA #0
@@ -304,11 +299,11 @@ ReadController:
 	LSR A                 ; Input is placed into carry flag
 	ROL controller1_state
 	INX
-	CPX #8
+	CPX #8				  ; Breaks at 8 as thats the max amount of inputs
 	BNE ReadController
 	
 	
-	;React to Right Button
+	; React to Right Button
 	LDA controller1_state
 	AND #BUTTON_RIGHT
 	BEQ ReadRight_Done 
@@ -318,7 +313,7 @@ ReadController:
 	STA sprite_player + sprite_x
 ReadRight_Done:
 
-	;React to Down Button
+	; React to Down Button
 	LDA controller1_state
 	AND #BUTTON_DOWN
 	BEQ ReadDown_Done
@@ -328,7 +323,7 @@ ReadRight_Done:
 	STA sprite_player + sprite_y
 ReadDown_Done:
 	
-	;React to Left Button
+	; React to Left Button
 	LDA controller1_state
 	AND #BUTTON_LEFT
 	BEQ ReadLeft_Done 
@@ -338,7 +333,7 @@ ReadDown_Done:
 	STA sprite_player + sprite_x
 ReadLeft_Done:
 
-	;React to Up Button
+	; React to Up Button
 	LDA controller1_state
 	AND #BUTTON_UP
 	BEQ ReadUp_Done
@@ -348,7 +343,7 @@ ReadLeft_Done:
 	STA sprite_player + sprite_y
 ReadUp_Done:	
 	
-	;React to A Button
+	; React to A Button
 	LDA controller1_state
 	AND #BUTTON_A
 	BEQ ReadA_Done
@@ -357,32 +352,32 @@ ReadUp_Done:
 	BNE ReadA_Done ; If there is no active bullet on screen, one will be spawned  
 	LDA #1
 	STA bullet_active
-	LDA sprite_player + sprite_y	;y position
+	LDA sprite_player + sprite_y	; y position
 	STA sprite_bullet + sprite_y
 	LDA #2		; Tile number
 	STA sprite_bullet + sprite_tile
 	LDA #0		; Attributes
 	STA sprite_bullet + sprite_attrib
-	LDA sprite_player + sprite_x	;X position
+	LDA sprite_player + sprite_x	; X position
 	STA sprite_bullet + sprite_x
 
 ReadA_Done:
 
 
-	;Update bullet position
+	; Update bullet position
 	LDA bullet_active
 	BEQ UpdateBullet_Done
 	LDA sprite_bullet + sprite_y
 	SEC
 	SBC #2
 	STA sprite_bullet + sprite_y
-	;Despawn bullet, as carry flag is clear, thus it has left the screen
+	; Despawn bullet, as carry flag is clear, thus it has left the screen
 	BCS UpdateBullet_Done
 	LDA #0
 	STA bullet_active
 UpdateBullet_Done:
 
-	;Update Enemy
+	; Update Enemy
 	LDA enemy_alive
 	BEQ Update_enemy_next
 	LDA sprite_enemy_0 + sprite_y
@@ -407,7 +402,7 @@ CheckCollisionwithEnemy .macro ; parameters object_x, object_y, object_hit_x, ob
 	CMP \1
 	BCC \7
 	
-	;Check Y
+	; Check Y
 	LDA sprite_enemy_0 + sprite_y
 	SEC
 	SBC \4
@@ -421,42 +416,38 @@ CheckCollisionwithEnemy .macro ; parameters object_x, object_y, object_hit_x, ob
 	BCC \7
 	.endm
 	
+	; Runs Enemy collision macro
 	CheckCollisionwithEnemy sprite_bullet+sprite_x, sprite_bullet+sprite_y, #BULLET_HITBOX_X, #BULLET_HITBOX_Y, #BULLET_HITBOX_WIDTH, #BULLET_HITBOX_HEIGHT, Update_enemy_nocollision
 	
-	;Handle Collision
+	; Handle Collision
 	LDA #0
-	STA bullet_active ;Destroy bullet
-	STA enemy_alive	  ;Destroy Enemy
+	STA bullet_active ; Destroy bullet
+	STA enemy_alive	  ; Destroy Enemy
 	LDA #$FF
 	STA sprite_bullet + sprite_y
-	STA sprite_enemy_0 + sprite_y	;Move bullet off screen
-	;Init enemy again after death
+	STA sprite_enemy_0 + sprite_y	; Move bullet off screen
+	; Init enemy again after death
 	LDA #1
 	STA enemy_alive
-	LDA #20	;y position
+	LDA #20	; y position
 	STA sprite_enemy_0 + enemy_y
 	LDA #1		; Tile number
 	STA sprite_enemy_0 + sprite_tile
 	LDA #0		; Attributes
 	STA sprite_enemy_0 + sprite_attrib
-	LDA #128	;X position
+	LDA #128	; X position
 	STA sprite_enemy_0 + enemy_x
 	
 Update_enemy_nocollision:
 Update_enemy_next:
 
-	;Check collision with player character
+	; Check collision with player character
 	CheckCollisionwithEnemy sprite_player+sprite_x, sprite_player+sprite_y, #0, #0, #8, #8, Update_enemy_nocollisionwithplayer 
-	;Handle collision and resets the game uif the player makes contact with the enemy
+	; Handle collision and resets the game uif the player makes contact with the enemy
 	JMP RESET
 Update_enemy_nocollisionwithplayer:
 	
-	
-	
-	
-	
-	
-	;Scroll background
+	; Scroll background
 	LDA #0
 	STA PPUSCROLL
 	LDA scroll_y
@@ -468,7 +459,7 @@ Update_enemy_nocollisionwithplayer:
 	; Copy sprite data to PPU
 	LDA #0
 	STA OAMADDR
-	LDA #$02 	;Tells where the sprites are stored I.E. $0200
+	LDA #$02 	; Tells where the sprites are stored I.E. $0200
 	STA OAMDMA
 	
 	RTI         ; Return from interrupt
