@@ -34,7 +34,6 @@ BULLET_HITBOX_Y		 = 3
 BULLET_HITBOX_WIDTH  = 2
 BULLET_HITBOX_HEIGHT = 2
 
-
 	.rsset $0010
 controller1_state .rs 1
 bullet_active     .rs 1
@@ -58,7 +57,6 @@ sprite_x		  .rs 1
 	.rsset $0000
 enemy_alive		  .rs 1
 
-	
 	.bank 0
     .org $C000
 
@@ -172,8 +170,7 @@ vblankwait2:
 	STA PPUDATA
 	LDA #$3D
 	STA PPUDATA
-	
-	
+
 	; Write Sprite Data for sprite 0
 	LDA #200	;y POSITION
 	STA sprite_player + sprite_y
@@ -198,7 +195,6 @@ vblankwait2:
 	STA score_1 + sprite_x
 	LDA #20
 	STA score_2 + sprite_x
-
 
 	; Load nametable data for backgrounds
 	LDA #$24	;Write address of $2000
@@ -269,17 +265,6 @@ LoadAttributesLoop:
 	STA PPUDATA
 	DEX
 	BNE LoadAttributesLoop
-
-
-	;Enemy Data Allocation
-	; LDA #$10
-	; STA PPUDATA
-	; LDA #$11
-	; STA PPUDATA
-	; LDA #$12
-	; STA PPUDATA
-	; LDA #$13
-	; STA PPUDATA
 	
 	; Initiates enemy at the start of the game
 	LDA #1
@@ -468,7 +453,6 @@ Update_enemy_next:
 	JMP RESET
 Update_enemy_nocollisionwithplayer:
 
-
 	; Update Score
 	LDA score
 	CMP #10
@@ -506,7 +490,7 @@ ScoreUpdateComplete:
 	RTI         ; Return from interrupt
 
 ; ---------------------------------------------------------------------------
-NametableData:
+NametableData: ; Holds all of the data for the backgrounds
 	.db $03,$03,$03,$03,$03,$03,$21,$03,$03,$03,$03,$20,$12,$12,$12,$12,$12,$12,$12,$12,$23,$03,$03,$03,$03,$03,$03,$03,$03,$03,$03,$03 
 	.db $03,$03,$03,$03,$03,$03,$03,$03,$03,$03,$03,$20,$12,$12,$12,$12,$12,$12,$12,$12,$23,$03,$03,$03,$10,$03,$03,$03,$03,$03,$03,$03
 	.db $03,$03,$03,$03,$03,$03,$03,$03,$03,$03,$03,$20,$12,$12,$12,$12,$12,$12,$12,$12,$23,$03,$03,$03,$03,$03,$03,$03,$03,$03,$03,$03
