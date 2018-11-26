@@ -26,7 +26,7 @@ BUTTON_DOWN = 	%00000100
 BUTTON_LEFT = 	%00000010
 BUTTON_RIGHT = 	%00000001
 
-ENEMY_HITBOX_WIDTH  = 8
+ENEMY_HITBOX_WIDTH  = 8 ; Constants used for collision
 ENEMY_HITBOX_HEIGHT = 8
 
 BULLET_HITBOX_X		 = 3
@@ -35,25 +35,25 @@ BULLET_HITBOX_WIDTH  = 2
 BULLET_HITBOX_HEIGHT = 2
 
 
-
 	.rsset $0010
 controller1_state .rs 1
 bullet_active     .rs 1
 nametable_address .rs 2
 scroll_y		  .rs 1
+score 			  .rs 1
   
 	.rsset $0200
 sprite_player 	  .rs 4
 sprite_bullet 	  .rs 4
 sprite_enemy_0    .rs 4
+score_1			  .rs 4	
+score_2           .rs 4
 
 	.rsset $0000
 sprite_y		  .rs 1
 sprite_tile		  .rs 1
 sprite_attrib	  .rs 1
 sprite_x		  .rs 1
-enemy_y			  .rs 1
-enemy_x			  .rs 1
 
 	.rsset $0000
 enemy_alive		  .rs 1
@@ -184,6 +184,21 @@ vblankwait2:
 	LDA #125	;X position
 	STA sprite_player + sprite_x
 
+	; Write Sprite Data for score sprites
+	LDA #10	;y POSITION
+	STA score_1 + sprite_y
+	STA score_2 + sprite_y
+	LDA #$30		; Tile number
+	STA score_1 + sprite_tile
+	STA score_2 + sprite_tile
+	LDA #0		; Attributes
+	STA score_1 + sprite_attrib
+	STA score_2 + sprite_attrib
+	LDA #10	;X position
+	STA score_1 + sprite_x
+	LDA #20
+	STA score_2 + sprite_x
+
 
 	; Load nametable data for backgrounds
 	LDA #$24	;Write address of $2000
@@ -219,7 +234,6 @@ LoadAttributes2Loop:  		;Loads attributes for the second nametable/looped backgr
 	STA PPUDATA
 	DEX
 	BNE LoadAttributes2Loop
-
 
 	; Load nametable data for backgrounds
 	LDA #$20	;Write address of $2000
@@ -414,6 +428,12 @@ CheckCollisionwithEnemy .macro ; parameters object_x, object_y, object_hit_x, ob
 	ADC \6 + 1 + ENEMY_HITBOX_HEIGHT
 	CMP \2
 	BCC \7
+
+	; Update Score
+	LDA score
+	CLC
+	ADC #1
+	STA score
 	.endm
 	
 	; Runs Enemy collision macro
@@ -424,28 +444,49 @@ CheckCollisionwithEnemy .macro ; parameters object_x, object_y, object_hit_x, ob
 	STA bullet_active ; Destroy bullet
 	STA enemy_alive	  ; Destroy Enemy
 	LDA #$FF
-	STA sprite_bullet + sprite_y
-	STA sprite_enemy_0 + sprite_y	; Move bullet off screen
+	STA sprite_bullet + sprite_x
+	STA sprite_enemy_0 + sprite_y	; Move bullet and enemy off screen
+	
 	; Init enemy again after death
 	LDA #1
 	STA enemy_alive
 	LDA #20	; y position
-	STA sprite_enemy_0 + enemy_y
+	STA sprite_enemy_0 + sprite_y
 	LDA #1		; Tile number
 	STA sprite_enemy_0 + sprite_tile
 	LDA #0		; Attributes
 	STA sprite_enemy_0 + sprite_attrib
 	LDA #128	; X position
-	STA sprite_enemy_0 + enemy_x
+	STA sprite_enemy_0 + sprite_x
 	
 Update_enemy_nocollision:
 Update_enemy_next:
 
 	; Check collision with player character
 	CheckCollisionwithEnemy sprite_player+sprite_x, sprite_player+sprite_y, #0, #0, #8, #8, Update_enemy_nocollisionwithplayer 
-	; Handle collision and resets the game uif the player makes contact with the enemy
+	; Handle collision and resets the game if the player makes contact with the enemy
 	JMP RESET
 Update_enemy_nocollisionwithplayer:
+
+
+	; Update Score
+	LDA score
+	CMP #10
+	BCS TenDigitAdd
+	CLC
+	ADC #$30
+	STA score_2 + sprite_tile
+	JMP ScoreUpdateComplete
+TenDigitAdd:
+	LDA #0
+	STA score
+	LDA #$30
+	STA score_2 + sprite_tile
+	LDA score_1 + sprite_tile
+	CLC
+	ADC #1
+	STA score_1 + sprite_tile
+ScoreUpdateComplete:
 	
 	; Scroll background
 	LDA #0
